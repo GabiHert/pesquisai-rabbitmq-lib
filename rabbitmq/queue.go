@@ -1,4 +1,4 @@
-package queue
+package rabbitmq
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 )
 
 type Queue struct {
-	connection                            *connection.Connection
+	connection                            connection.Connection
 	channel                               *amqp.Channel
 	queue                                 *amqp.Queue
 	name, contentType, exchange, consumer string
@@ -101,9 +101,8 @@ func (q *Queue) Consume(ctx context.Context, handler func(delivery amqp.Delivery
 	return
 }
 
-func NewQueue(connection *connection.Connection, name, contentType string, createIfNotExists bool) *Queue {
+func NewQueue(name, contentType string, createIfNotExists bool) *Queue {
 	return &Queue{
-		connection:        connection,
 		channel:           nil,
 		queue:             nil,
 		name:              name,
