@@ -5,6 +5,10 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+const (
+	CONTENT_TYPE_JSON = "JSON"
+)
+
 type Queue struct {
 	connection                            *Connection
 	channel                               *amqp.Channel
