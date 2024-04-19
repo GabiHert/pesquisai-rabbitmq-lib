@@ -6,19 +6,14 @@ import (
 )
 
 type Queue struct {
-	connection                            Connection
+	connection                            *Connection
 	channel                               *amqp.Channel
 	queue                                 *amqp.Queue
 	name, contentType, exchange, consumer string
 	createIfNotExists                     bool
 }
 
-func (q *Queue) Connect(user, pwd, host, port, queueName string) (err error) {
-	err = q.connection.Connect(user, pwd, host, port)
-	if err != nil {
-		return
-	}
-
+func (q *Queue) Connect(queueName string) (err error) {
 	q.name = queueName
 	if q.channel == nil {
 		q.channel, err = q.connection.Channel()
@@ -100,8 +95,9 @@ func (q *Queue) Consume(ctx context.Context, handler func(delivery amqp.Delivery
 	return
 }
 
-func NewQueue(name, contentType string, createIfNotExists bool) *Queue {
+func NewQueue(connection *Connection, name, contentType string, createIfNotExists bool) *Queue {
 	return &Queue{
+		connection:        connection,
 		channel:           nil,
 		queue:             nil,
 		name:              name,
