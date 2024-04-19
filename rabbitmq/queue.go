@@ -2,12 +2,11 @@ package rabbitmq
 
 import (
 	"context"
-	"github.com/GabiHert/pesquisai-rabbitmq-lib/connection"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Queue struct {
-	connection                            connection.Connection
+	connection                            Connection
 	channel                               *amqp.Channel
 	queue                                 *amqp.Queue
 	name, contentType, exchange, consumer string
