@@ -1,4 +1,4 @@
-module github.com/GabiHert/pesquisai-rabbitmq-lib
+module github.com/PesquisAi/pesquisai-rabbitmq-lib
 
 go 1.22
 
