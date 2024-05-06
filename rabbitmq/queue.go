@@ -17,8 +17,7 @@ type Queue struct {
 	createIfNotExists                     bool
 }
 
-func (q *Queue) Connect(queueName string) (err error) {
-	q.name = queueName
+func (q *Queue) Connect() (err error) {
 	if q.channel == nil {
 		q.channel, err = q.connection.Channel()
 		if err != nil {
