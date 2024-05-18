@@ -20,6 +20,7 @@ const (
 
 const (
 	envKeyQueueMaxRetries = "QUEUE_MAX_RETRIES"
+	envKeyQueueRetryDelay = "QUEUE_RETRY_DELAY"
 )
 
 type Queue struct {
@@ -28,7 +29,6 @@ type Queue struct {
 	queue                             *amqp.Queue
 	name, contentType, dqlName        string
 	createIfNotExists, retryable, dlq bool
-	delay                             int
 }
 
 func (q *Queue) Connect() (err error) {
@@ -69,34 +69,34 @@ func (q *Queue) Connect() (err error) {
 			}
 		}
 
-		if q.retryable {
-			err = q.channel.ExchangeDeclare(
-				delayExchangeName,
-				"x-delayed-message",
-				true,
-				false,
-				false,
-				false,
-				map[string]interface{}{
-					"x-delayed-type": "direct",
-				},
-			)
-			if err != nil {
-				return
-			}
+	}
 
-			err = q.channel.QueueBind(
-				q.name,
-				q.name,
-				delayExchangeName,
-				false,
-				nil,
-			)
-			if err != nil {
-				return
-			}
+	if q.retryable {
+		err = q.channel.ExchangeDeclare(
+			delayExchangeName,
+			"x-delayed-message",
+			true,
+			false,
+			false,
+			false,
+			map[string]interface{}{
+				"x-delayed-type": "direct",
+			},
+		)
+		if err != nil {
+			return
 		}
 
+		err = q.channel.QueueBind(
+			q.name,
+			q.name,
+			delayExchangeName,
+			false,
+			nil,
+		)
+		if err != nil {
+			return
+		}
 	}
 	return
 }
@@ -155,7 +155,7 @@ func (q *Queue) Consume(ctx context.Context, handler func(delivery amqp.Delivery
 				maxConsumerRetries, _ := strconv.Atoi(os.Getenv(envKeyQueueMaxRetries))
 				if q.retryable && int(retry) < maxConsumerRetries {
 					msg.Headers["x-retry-count"] = retry + 1
-					msg.Headers["x-delay"] = q.delay
+					msg.Headers["x-delay"] = os.Getenv(envKeyQueueRetryDelay)
 					if err = q.channel.PublishWithContext(
 						ctx,
 						delayExchangeName,
@@ -199,14 +199,13 @@ func (q *Queue) Consume(ctx context.Context, handler func(delivery amqp.Delivery
 	return
 }
 
-func NewQueue(connection *Connection, name, contentType string, delay int, createIfNotExists, dlq, retryable bool) *Queue {
+func NewQueue(connection *Connection, name, contentType string, createIfNotExists, dlq, retryable bool) *Queue {
 	return &Queue{
 		connection:        connection,
 		channel:           nil,
 		queue:             nil,
 		name:              name,
 		contentType:       contentType,
-		delay:             delay,
 		createIfNotExists: createIfNotExists,
 		dlq:               dlq,
 		retryable:         retryable,
