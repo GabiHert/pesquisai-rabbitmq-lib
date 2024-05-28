@@ -149,6 +149,9 @@ func (q *Queue) Consume(ctx context.Context, handler func(delivery amqp.Delivery
 		for msg := range messagesCh {
 			e := handler(msg)
 			if e != nil {
+				if msg.Headers == nil {
+					msg.Headers = map[string]any{}
+				}
 				retry, _ := msg.Headers["x-retry-count"].(int32)
 				fmt.Println(fmt.Sprintf("%s - x-retry-count: %d - ", time.Now().Format(time.RFC3339), retry), e.Error())
 
